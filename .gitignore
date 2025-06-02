@@ -1,0 +1,38 @@
+# Node and package manager files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment settings
+.env
+.env.*
+
+# IDE and OS files
+.DS_Store
+*.swp
+*.swo
+*.bak
+*.tmp
+Thumbs.db
+.vscode/
+.idea/
+*.code-workspace
+
+# Output/build/cache
+dist/
+build/
+.cache/
+coverage/
+*.log
+*.zip
+
+# PWA cache and service worker artifacts
+sw.*
+workbox-*
+.cache/
+offline/
+
+# Misc
+*.local
+*.lock

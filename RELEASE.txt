@@ -1,0 +1,9 @@
+## [v1.0.0] — 2025-06-02
+
+- First public release
+- Mobile-first, minimalist web app for creating photo slideshows
+- Drag-and-drop or tap-to-select image upload
+- Responsive, swipeable viewer
+- One-tap video export (WebM, Facebook-friendly)
+- 100% offline, no external image or backend dependencies
+- Legal: MIT/US-MN/Baxter/EAR99/OIN
