@@ -1,0 +1,176 @@
+<!--LEGAL-DNA:{"jurisdiction":"US/MN/Baxter","export_tag":"EAR99","spdx":"MIT","artifact_time":1748892881653,"def_pub":"OIN","consent_req":true,"city":"Baxter"}-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mobile Slideshow Video Maker for Facebook</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="color-scheme" content="dark light"/>
+  <meta name="description" content="Instantly make and export photo slideshows for Facebook. Select photos, preview, export as video (WebM), mobile and offline." />
+  <style>
+    html, body { background: #0f172a; }
+    ::file-selector-button { @apply bg-blue-600 text-white px-3 py-2 rounded-lg shadow font-semibold; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-blue-900 text-slate-100">
+  <main class="w-full max-w-md mx-auto flex flex-col items-center justify-center p-4 gap-6">
+    <!-- Headline & Subheadline -->
+    <header class="w-full text-center mb-2">
+      <h1 class="text-2xl font-extrabold tracking-tight text-blue-400">Facebook Slideshow Video Maker</h1>
+      <p class="text-slate-400 text-sm mt-2">Select your favorite photos, preview your slideshow, and export as a Facebook-ready video. <span class="block text-xs mt-1">Everything runs offline, 100% private.</span></p>
+    </header>
+
+    <!-- Image Upload & Diagram -->
+    <section class="w-full flex flex-col items-center">
+      <label for="fileInput" class="block w-full mb-3">
+        <input id="fileInput" type="file" accept="image/*" multiple
+               class="w-full border-2 border-dashed border-blue-400 rounded-xl bg-slate-800 text-blue-200 cursor-pointer p-4 focus:ring-2 focus:ring-blue-600 transition"
+        />
+      </label>
+      <!-- SVG -->
+      <svg width="80" height="80" viewBox="0 0 80 80" aria-hidden="true" class="mx-auto mb-2 drop-shadow-xl">
+        <rect x="8" y="8" width="64" height="64" rx="14" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+        <path d="M40 25 v22" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+        <path d="M32 37 l8 -12 l8 12" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+        <rect x="20" y="53" width="40" height="6" rx="3" fill="#38bdf8" opacity="0.08"/>
+      </svg>
+      <p class="text-sm text-slate-500 mb-1">Choose photos for your slideshow</p>
+    </section>
+
+    <!-- Slideshow -->
+    <section id="slideshowContainer" class="w-full flex flex-col items-center gap-3">
+      <div id="slideshow" class="relative w-full h-64 bg-slate-800 rounded-xl flex items-center justify-center overflow-hidden border-2 border-blue-700 shadow-xl" tabindex="0" aria-label="Slideshow Viewer" style="touch-action:pan-y;">
+        <span id="emptyMsg" class="text-slate-500 text-center text-base">No images loaded yet.</span>
+        <!-- Images injected here -->
+      </div>
+      <div id="controls" class="flex items-center justify-center gap-4 mt-1 invisible">
+        <button id="prevBtn" class="rounded-full bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 flex items-center justify-center focus:ring-2 ring-blue-300 transition" aria-label="Previous slide">&larr;</button>
+        <span id="slideCount" class="text-sm text-blue-200 font-mono"></span>
+        <button id="nextBtn" class="rounded-full bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 flex items-center justify-center focus:ring-2 ring-blue-300 transition" aria-label="Next slide">&rarr;</button>
+      </div>
+      <!-- Export Button -->
+      <button id="exportBtn" class="mt-4 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold px-5 py-3 shadow focus:ring-2 ring-green-300 transition text-base invisible" title="Export slideshow as video for Facebook">
+        &#128249; Export Slideshow as Video
+      </button>
+      <span id="exportStatus" class="mt-2 text-xs text-slate-400"></span>
+      <a id="downloadLink" class="hidden mt-2 bg-blue-700 hover:bg-blue-600 text-white rounded px-3 py-2 shadow font-mono text-xs" download="slideshow.webm">Download Video</a>
+    </section>
+  </main>
+
+  <script>
+    const input = document.getElementById('fileInput');
+    const slideshow = document.getElementById('slideshow');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const controls = document.getElementById('controls');
+    const slideCount = document.getElementById('slideCount');
+    const emptyMsg = document.getElementById('emptyMsg');
+    const exportBtn = document.getElementById('exportBtn');
+    const exportStatus = document.getElementById('exportStatus');
+    const downloadLink = document.getElementById('downloadLink');
+    let images = [], idx = 0, touchStartX = 0, touchEndX = 0;
+
+    function showSlide(i) {
+      if (!images.length) { emptyMsg.style.display = 'block'; controls.classList.add('invisible'); slideshow.querySelectorAll('img').forEach(img=>img.remove()); exportBtn.classList.add('invisible'); downloadLink.classList.add('hidden'); return; }
+      idx = (i+images.length) % images.length;
+      emptyMsg.style.display = 'none';
+      controls.classList.remove('invisible');
+      exportBtn.classList.remove('invisible');
+      downloadLink.classList.add('hidden');
+      slideshow.querySelectorAll('img').forEach(img=>img.remove());
+      let img = document.createElement('img');
+      img.src = images[idx];
+      img.alt = `Slide ${idx+1}`;
+      img.className = 'max-h-full max-w-full rounded-lg mx-auto transition-all duration-200 shadow-lg bg-slate-900';
+      img.loading = 'lazy';
+      slideshow.appendChild(img);
+      slideCount.textContent = `${idx+1} / ${images.length}`;
+    }
+    input.onchange = async e => {
+      images = [];
+      idx = 0;
+      const files = [...input.files].filter(f => f.type.startsWith('image/'));
+      for (let file of files) images.push(await readAsDataURL(file));
+      showSlide(0);
+    };
+    function readAsDataURL(file) { return new Promise(res=>{ let r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(file); }); }
+    prevBtn.onclick = () => showSlide(idx-1);
+    nextBtn.onclick = () => showSlide(idx+1);
+    slideshow.addEventListener('touchstart', e => { if (e.touches.length === 1) touchStartX = e.touches[0].clientX; });
+    slideshow.addEventListener('touchend', e => {
+      if (!images.length) return;
+      touchEndX = e.changedTouches[0].clientX;
+      if (touchEndX < touchStartX - 40) showSlide(idx+1);
+      if (touchEndX > touchStartX + 40) showSlide(idx-1);
+    });
+    slideshow.addEventListener('keydown', e => {
+      if (!images.length) return;
+      if (e.key === 'ArrowLeft') showSlide(idx-1);
+      if (e.key === 'ArrowRight') showSlide(idx+1);
+    });
+    slideshow.addEventListener('click', ()=>slideshow.focus());
+
+    // Video Exporter
+    exportBtn.onclick = async () => {
+      if (!images.length) return;
+      exportStatus.textContent = "Rendering slideshow as video (WebM)...";
+      exportBtn.disabled = true;
+      // 1. Create off-screen canvas
+      const W = 720, H = 1280; // 9:16 vertical video, FB story/reel optimal
+      const canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+      // 2. Set up stream & recorder
+      const stream = canvas.captureStream();
+      const recorder = new MediaRecorder(stream, {mimeType: 'video/webm;codecs=vp9'});
+      let chunks = [];
+      recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+      // 3. Slideshow logic (2s per image, fade in)
+      const DURATION_PER_IMAGE = 2000, FADE = 400;
+      let tStart = null, imgIdx = 0, phase = 'fadein';
+      let img = new window.Image();
+      img.src = images[0];
+      function drawSlide(ts) {
+        if (!tStart) tStart = ts;
+        const t = ts - tStart;
+        // Set bg
+        ctx.fillStyle = '#172554';
+        ctx.fillRect(0, 0, W, H);
+        // Fade logic
+        let alpha = 1.0;
+        if (t < FADE) alpha = t/FADE;
+        else if (t > DURATION_PER_IMAGE-FADE) alpha = Math.max(0,(DURATION_PER_IMAGE-t)/FADE);
+        ctx.globalAlpha = alpha;
+        // Fit image
+        let iw = img.width, ih = img.height, scale = Math.min(W/iw, H/ih), nw = iw*scale, nh = ih*scale;
+        ctx.drawImage(img, (W-nw)/2, (H-nh)/2, nw, nh);
+        ctx.globalAlpha = 1.0;
+        // Next slide
+        if (t >= DURATION_PER_IMAGE) {
+          imgIdx++;
+          if (imgIdx >= images.length) { recorder.stop(); return; }
+          img = new window.Image(); img.src = images[imgIdx];
+          tStart = ts;
+        }
+        if (recorder.state === 'recording') requestAnimationFrame(drawSlide);
+      }
+      // 4. Start recording
+      recorder.start();
+      img.onload = () => { requestAnimationFrame(drawSlide); };
+      recorder.onstop = async () => {
+        const blob = new Blob(chunks, {type:'video/webm'});
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.classList.remove('hidden');
+        exportStatus.textContent = "Video ready! Tap Download and upload to Facebook.";
+        exportBtn.disabled = false;
+      };
+    };
+  </script>
+
+  <footer class="w-full text-xs text-center mt-12 mb-2 text-slate-500 select-none opacity-70">
+    &copy; 2025 Shroomtop420™. For Facebook upload, export then share to Stories/Reels. <a href="https://www.shroomtop420.com" class="underline text-blue-400 hover:text-blue-200" tabindex="0">shroomtop420.com</a>
+  </footer>
+</body>
+</html>
